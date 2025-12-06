@@ -94,6 +94,20 @@ func FindComponents[T Component](s *Scene) []T {
 	return result
 }
 
+// FindGameObjectsWithComponent returns all GameObjects that have a component of type T
+func FindGameObjectsWithComponent[T Component](s *Scene) []*GameObject {
+	var result []*GameObject
+	for _, go_ := range s.gameObjects {
+		for _, c := range go_.components {
+			if _, ok := c.(T); ok {
+				result = append(result, go_)
+				break // Only add each GameObject once
+			}
+		}
+	}
+	return result
+}
+
 // GetAllGameObjects returns all GameObjects in the scene
 func (s *Scene) GetAllGameObjects() []*GameObject {
 	return s.gameObjects

@@ -56,14 +56,12 @@ func (c *CubeRenderer) Draw() {
 
 	t := c.GameObject.Transform
 	pos := t.WorldPosition()
-	rot := t.WorldRotation()
 	worldScale := t.WorldScale()
 
-	// DrawModelEx takes position, rotation axis, rotation angle, scale, tint
-	// For full euler rotation, we need to combine rotations
-	// Simplified: just use Y rotation for now (most common case)
-	rl.DrawModelEx(c.model, pos, Vec3(0, 1, 0), rot.Y, worldScale, c.Color)
+	// Apply full 3D rotation via transform matrix
+	c.model.Transform = t.WorldRotationMatrix()
 
-	// Draw wireframe
-	rl.DrawModelWiresEx(c.model, pos, Vec3(0, 1, 0), rot.Y, worldScale, Black)
+	// Draw with position and scale (rotation already in transform)
+	rl.DrawModelEx(c.model, pos, Vec3(0, 1, 0), 0, worldScale, c.Color)
+	rl.DrawModelWiresEx(c.model, pos, Vec3(0, 1, 0), 0, worldScale, Black)
 }

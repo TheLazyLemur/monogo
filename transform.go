@@ -121,6 +121,16 @@ func (t *Transform) Right() Vector3 {
 	)
 }
 
+// WorldRotationMatrix returns the world rotation as a matrix (for rendering)
+func (t *Transform) WorldRotationMatrix() rl.Matrix {
+	rot := t.WorldRotation()
+	return rl.MatrixRotateXYZ(rl.NewVector3(
+		rot.X*rl.Deg2rad,
+		rot.Y*rl.Deg2rad,
+		rot.Z*rl.Deg2rad,
+	))
+}
+
 func sinf(x float32) float32 {
 	v := rl.Vector2Rotate(rl.NewVector2(1, 0), x)
 	return v.Y

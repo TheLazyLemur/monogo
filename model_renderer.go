@@ -51,14 +51,9 @@ func (m *ModelRenderer) SetShader(s *Shader) *ModelRenderer {
 
 func (m *ModelRenderer) Draw() {
 	t := m.GameObject.Transform
-	worldRot := t.WorldRotation()
 
-	// Apply rotation from transform
-	m.Model.Transform = rl.MatrixRotateXYZ(rl.NewVector3(
-		worldRot.X*rl.Deg2rad,
-		worldRot.Y*rl.Deg2rad,
-		worldRot.Z*rl.Deg2rad,
-	))
+	// Apply full 3D rotation via transform matrix
+	m.Model.Transform = t.WorldRotationMatrix()
 
 	scale := m.Scale * t.WorldScale().X
 	rl.DrawModel(m.Model, t.WorldPosition(), scale, m.Color)

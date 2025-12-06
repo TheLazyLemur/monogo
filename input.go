@@ -117,3 +117,23 @@ func Vertical() float32 {
 	}
 	return v
 }
+
+// Mouse lock state (tracked since raylib doesn't expose IsCursorHidden)
+var mouseLocked bool
+
+// LockMouse captures and hides the cursor (for FPS controls)
+func LockMouse() {
+	rl.DisableCursor()
+	mouseLocked = true
+}
+
+// UnlockMouse releases and shows the cursor
+func UnlockMouse() {
+	rl.EnableCursor()
+	mouseLocked = false
+}
+
+// IsMouseLocked returns true if cursor is captured
+func IsMouseLocked() bool {
+	return mouseLocked
+}

@@ -9,6 +9,8 @@ type Camera struct {
 	offset      rl.Vector3
 	followSpeed float32
 	mode        CameraMode
+	yaw         float32 // horizontal rotation in degrees
+	pitch       float32 // vertical rotation in degrees
 }
 
 type CameraMode int
@@ -150,4 +152,63 @@ func (c *Camera) GetGroundPoint() (Vector3, bool) {
 func (c *Camera) WorldToScreen(pos Vector3) (x, y int) {
 	screen := rl.GetWorldToScreen(pos, c.rl)
 	return int(screen.X), int(screen.Y)
+}
+
+// SetYaw sets horizontal rotation in degrees and updates target
+func (c *Camera) SetYaw(deg float32) {
+	c.yaw = deg
+	c.updateTargetFromOrientation()
+}
+
+// SetPitch sets vertical rotation in degrees (clamped to -89 to 89) and updates target
+func (c *Camera) SetPitch(deg float32) {
+	if deg > 89 {
+		deg = 89
+	}
+	if deg < -89 {
+		deg = -89
+	}
+	c.pitch = deg
+	c.updateTargetFromOrientation()
+}
+
+// GetYaw returns horizontal rotation in degrees
+func (c *Camera) GetYaw() float32 {
+	return c.yaw
+}
+
+// GetPitch returns vertical rotation in degrees
+func (c *Camera) GetPitch() float32 {
+	return c.pitch
+}
+
+// GetForward returns the camera's forward direction vector
+func (c *Camera) GetForward() Vector3 {
+	yawRad := c.yaw * rl.Deg2rad
+	pitchRad := c.pitch * rl.Deg2rad
+	return Vec3(
+		Cos(pitchRad)*Cos(yawRad),
+		Sin(pitchRad),
+		Cos(pitchRad)*Sin(yawRad),
+	)
+}
+
+// GetRight returns the camera's right direction vector
+func (c *Camera) GetRight() Vector3 {
+	yawRad := (c.yaw + 90) * rl.Deg2rad
+	return Vec3(
+		Cos(yawRad),
+		0,
+		Sin(yawRad),
+	)
+}
+
+// updateTargetFromOrientation updates target based on position and yaw/pitch
+func (c *Camera) updateTargetFromOrientation() {
+	forward := c.GetForward()
+	c.rl.Target = rl.NewVector3(
+		c.rl.Position.X+forward.X,
+		c.rl.Position.Y+forward.Y,
+		c.rl.Position.Z+forward.Z,
+	)
 }

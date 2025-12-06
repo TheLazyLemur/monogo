@@ -127,6 +127,9 @@ if unit != nil {
 
 // Find all components of a type in the scene
 allUnits := monogo.FindComponents[*Unit](scene)
+
+// Find all GameObjects that have a specific component
+targetObjects := monogo.FindGameObjectsWithComponent[*Target](scene)
 ```
 
 ### Transform Hierarchy
@@ -153,8 +156,11 @@ worldPos := turret.Transform.WorldPosition()
 ### Renderers
 
 ```go
-// Colored cube
+// Colored cube (supports full 3D rotation)
 cube := monogo.NewCubeRenderer(monogo.Red, monogo.Vec3(1, 1, 1))
+
+// Colored sphere
+sphere := monogo.NewSphereRenderer(monogo.Blue, 0.5) // radius 0.5
 
 // 3D model from file
 model := monogo.NewModelRendererFromFile("assets/robot.obj")
@@ -281,6 +287,27 @@ func (c *RTSCamera) Update(dt float32) {
 }
 ```
 
+### FPS Camera Utilities
+
+For first-person cameras, use yaw/pitch controls:
+
+```go
+cam := scene.Camera
+
+// Set orientation (pitch clamped to -89 to 89)
+cam.SetYaw(yaw)
+cam.SetPitch(pitch)
+
+// Get direction vectors for movement
+forward := cam.GetForward()  // Where camera looks
+right := cam.GetRight()      // Strafe direction
+
+// Use with mouse delta for look
+dx, dy := monogo.MouseDelta()
+cam.SetYaw(cam.GetYaw() + dx * sensitivity)
+cam.SetPitch(cam.GetPitch() - dy * sensitivity)
+```
+
 ### Raycasting
 
 ```go
@@ -355,6 +382,11 @@ if monogo.MouseHeld(monogo.MouseRight) { }
 x, y := monogo.MousePosition()
 dx, dy := monogo.MouseDelta()
 wheel := monogo.MouseWheel()
+
+// Mouse lock (for FPS controls)
+monogo.LockMouse()              // Capture and hide cursor
+monogo.UnlockMouse()            // Release cursor
+if monogo.IsMouseLocked() { }   // Check state
 
 // Axes (returns -1, 0, or 1)
 h := monogo.Horizontal() // A/D or Left/Right
@@ -647,6 +679,7 @@ type Transform struct {
 | `WorldPosition() Vector3` | Absolute world position |
 | `WorldRotation() Vector3` | Absolute world rotation |
 | `WorldScale() Vector3` | Absolute world scale |
+| `WorldRotationMatrix() rl.Matrix` | Rotation as matrix (for rendering) |
 | `SetWorldPosition(pos Vector3)` | Set position in world space |
 | `Forward() Vector3` | Forward direction vector |
 | `Right() Vector3` | Right direction vector |
@@ -670,6 +703,12 @@ type Camera struct {}
 | `LookAt(x, y, z float32)` | Point camera at position |
 | `Follow(go_ *GameObject)` | Snap-follow a GameObject |
 | `FollowSmooth(go_ *GameObject, speed float32)` | Smooth-follow a GameObject |
+| `SetYaw(deg float32)` | Set horizontal rotation (updates target) |
+| `SetPitch(deg float32)` | Set vertical rotation (clamped -89 to 89) |
+| `GetYaw() float32` | Get horizontal rotation |
+| `GetPitch() float32` | Get vertical rotation |
+| `GetForward() Vector3` | Get forward direction from yaw/pitch |
+| `GetRight() Vector3` | Get right direction from yaw |
 | `GetMouseRay() rl.Ray` | Get ray from camera through mouse |
 | `GetGroundPoint() (Vector3, bool)` | Get mouse-ray intersection with Y=0 |
 | `WorldToScreen(pos Vector3) (x, y int)` | Convert 3D to screen coords |
@@ -709,6 +748,23 @@ func NewCubeRenderer(color Color, size Vector3) *CubeRenderer
 |-------|------|-------------|
 | `Color` | `Color` | Cube color |
 | `Size` | `Vector3` | Cube dimensions |
+
+---
+
+### SphereRenderer
+
+```go
+func NewSphereRenderer(color Color, radius float32) *SphereRenderer
+```
+
+| Method | Description |
+|--------|-------------|
+| `SetShader(s *Shader) *SphereRenderer` | Apply custom shader |
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `Color` | `Color` | Sphere color |
+| `Radius` | `float32` | Sphere radius |
 
 ---
 
@@ -866,10 +922,11 @@ func IsPersistent(go_ *GameObject) bool        // Check persistence
 ### Component Functions
 
 ```go
-func GetComponent[T Component](go_ *GameObject) T      // Get component by type
-func HasComponent[T Component](go_ *GameObject) bool   // Check for component
-func GetComponents[T Component](go_ *GameObject) []T   // Get all of type
-func FindComponents[T Component](s *Scene) []T         // Find all in scene
+func GetComponent[T Component](go_ *GameObject) T              // Get component by type
+func HasComponent[T Component](go_ *GameObject) bool           // Check for component
+func GetComponents[T Component](go_ *GameObject) []T           // Get all of type
+func FindComponents[T Component](s *Scene) []T                 // Find all in scene
+func FindGameObjectsWithComponent[T Component](s *Scene) []*GameObject  // Find objects by component
 ```
 
 ---
@@ -891,6 +948,9 @@ func MouseHeld(button MouseButton) bool      // Currently held
 func MousePosition() (x, y int)              // Screen position
 func MouseDelta() (x, y float32)             // Movement since last frame
 func MouseWheel() float32                    // Wheel movement
+func LockMouse()                             // Capture and hide cursor
+func UnlockMouse()                           // Release cursor
+func IsMouseLocked() bool                    // Check if cursor captured
 ```
 
 **Axes:**
